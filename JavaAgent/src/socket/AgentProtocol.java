@@ -6,6 +6,8 @@ import bean.ClazzInfo;
 import trigger.ShutdownTrigger;
 
 public class AgentProtocol {
+	
+	private static final Charset UTF8 = Charset.forName("UTF-8");
 
 	public static final String EOF = System.getProperty("line.separator");
 
@@ -27,14 +29,19 @@ public class AgentProtocol {
 	public static byte[] clazzInfoToByte() {
 		Class clazz = ClazzInfo.getClazz();
 		String name = clazz.getName();
-		byte[] nameByte = name.getBytes(Charset.forName("UTF-8"));
+		byte[] nameByte = name.getBytes(UTF8);
 		byte[] clazzByte = ClazzInfo.getClazzByte();
+		return getBytesFromObjs(nameByte, clazzByte, EOF.getBytes());
+	}
+	
+	public static byte[] clazzInfoToByte(String name, byte[] clazzByte) {
+		byte[] nameByte = name.getBytes(UTF8);
 		return getBytesFromObjs(nameByte, clazzByte, EOF.getBytes());
 	}
 
 	public static void byteToClazzInfo(byte[] objBytes) throws ClassNotFoundException {
 		byte[][] objsByte = getObjsFromBytes(objBytes, 2);
-		String clazzName = new String(objsByte[0], Charset.forName("UTF-8"));
+		String clazzName = new String(objsByte[0], UTF8);
 		ClazzInfo.setClazz(Class.forName(clazzName));
 		ClazzInfo.setClazzByte(objsByte[1]);
 	}

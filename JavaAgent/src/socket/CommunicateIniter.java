@@ -16,7 +16,7 @@ import message.AgentMessage;
  */
 public class CommunicateIniter {
 
-	public static synchronized boolean refresh(String args, boolean demon) throws Exception {
+	public static synchronized boolean refresh(String args) throws Exception {
 		InputStream is = null;
 		Writer writer = null;
 		try {

@@ -33,7 +33,10 @@ public class AgentMain {
 		}
 
 		// 通信握手
-		CommunicateIniter.refresh(args, false);
+		if (!CommunicateIniter.refresh(args)) {
+			AgentMessage.sendError("first communicate fail:", args);
+			return;
+		}
 
 		AgentMessage.sendInfo("agentmain begin Args:", args);
 
@@ -157,7 +160,7 @@ public class AgentMain {
 						Connector.close();
 						return;
 					}
-					CommunicateIniter.refresh(args, true);
+					CommunicateIniter.refresh(args);
 				} catch (Throwable t) {
 					AgentMessage.sendError("communi exception:", t);
 				}
