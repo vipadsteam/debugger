@@ -1,4 +1,4 @@
-classname=org.apache.commons.lang3.StringUtils
-path=StringUtils.class
+classname=com.vip.wk.wukong.service.impl.PicEngineServiceImpl
+path=PicEngineServiceImpl.class
 stop=0
 wait=20
