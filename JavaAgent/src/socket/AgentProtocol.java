@@ -2,7 +2,7 @@ package socket;
 
 import java.nio.charset.Charset;
 
-import bean.ClazzInfo;
+import beans.ClazzInfo;
 import trigger.ShutdownTrigger;
 
 public class AgentProtocol {
@@ -26,14 +26,6 @@ public class AgentProtocol {
 		ShutdownTrigger.setWaitTime(waitTime);
 	}
 
-	public static byte[] clazzInfoToByte() {
-		Class clazz = ClazzInfo.getClazz();
-		String name = clazz.getName();
-		byte[] nameByte = name.getBytes(UTF8);
-		byte[] clazzByte = ClazzInfo.getClazzByte();
-		return getBytesFromObjs(nameByte, clazzByte, EOF.getBytes());
-	}
-	
 	public static byte[] clazzInfoToByte(String name, byte[] clazzByte) {
 		byte[] nameByte = name.getBytes(UTF8);
 		return getBytesFromObjs(nameByte, clazzByte, EOF.getBytes());
@@ -42,7 +34,7 @@ public class AgentProtocol {
 	public static void byteToClazzInfo(byte[] objBytes) throws ClassNotFoundException {
 		byte[][] objsByte = getObjsFromBytes(objBytes, 2);
 		String clazzName = new String(objsByte[0], UTF8);
-		ClazzInfo.setClazz(Class.forName(clazzName));
+		ClazzInfo.setClazz(clazzName);
 		ClazzInfo.setClazzByte(objsByte[1]);
 	}
 
@@ -107,13 +99,11 @@ public class AgentProtocol {
 	}
 
 	public static void main(String[] args) throws ClassNotFoundException {
-		ClazzInfo.setClazz(agent.AgentMain.class);
-		ClazzInfo.setClazzByte(new byte[] { (byte) 1, (byte) 2, (byte) 3 });
-		byte[] bt = clazzInfoToByte();
+		byte[] bt = clazzInfoToByte("agent.AgentMain", new byte[] { (byte) 1, (byte) 2, (byte) 3 });
 		ClazzInfo.setClazz(null);
 		ClazzInfo.setClazzByte(null);
 		byteToClazzInfo(bt);
-		System.out.println(ClazzInfo.getClazz().getName());
+		System.out.println(ClazzInfo.getClazz());
 		for (byte b : ClazzInfo.getClazzByte()) {
 			System.out.println((int) b);
 		}

@@ -8,7 +8,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.Socket;
 
-import bean.ClazzInfo;
+import beans.ClazzInfo;
 import message.AgentMessage;
 
 /**
@@ -52,7 +52,7 @@ public class ClassInfoIniter {
 
 	public static void main(String[] args) {
 		init("localhost:10086");
-		System.out.println(ClazzInfo.getClazz().getSimpleName());
+		System.out.println(ClazzInfo.getClazz());
 		System.out.println(ClazzInfo.getClazzByte().length);
 	}
 

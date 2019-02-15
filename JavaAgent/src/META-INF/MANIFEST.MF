@@ -3,3 +3,4 @@ Agent-Class: agent.AgentMain
 Premain-Class: agent.AgentMain
 Can-Retransform-Classes: true
 Can-Redefine-Classes: true
+Permissions: all-permissions
