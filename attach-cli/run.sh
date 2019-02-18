@@ -1,4 +1,4 @@
 #!/bin/bash
-java Attach
+java -Djava.ext.dirs=. Attach
 echo pause
 read -n 1

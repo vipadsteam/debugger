@@ -5,6 +5,8 @@ package agent.server;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 /**
  * @author USER
@@ -16,7 +18,8 @@ public class Server {
 
 	static {
 		try {
-			server = new ServerSocket(10086);
+			String portStr = Files.readAllLines(Paths.get("port")).get(0);
+			server = new ServerSocket(Integer.valueOf(portStr));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

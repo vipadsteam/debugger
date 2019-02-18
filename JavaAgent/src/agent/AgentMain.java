@@ -4,6 +4,13 @@
 package agent;
 
 import java.lang.instrument.Instrumentation;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -45,37 +52,80 @@ public class AgentMain {
 			return;
 		}
 
-		Class clazz = getClass(ClazzInfo.getClazz());
-		if (null == clazz) {
-			AgentMessage.sendError("class not founded:", args);
+		Set<Class> clazzList = getClasses(ClazzInfo.getClazz());
+		if (null == clazzList || clazzList.size() == 0) {
+			AgentMessage.sendError("class not founded:", clazzList);
 			return;
 		}
+
+		AgentMessage.sendInfo("class founded:", ClazzInfo.getClazz(), " size:", clazzList.size());
+		printClazzList(clazzList);
+
+		Class[] clazzes = new Class[clazzList.size()];
+		int i = 0;
+		for (Class clazz : clazzList) {
+			clazzes[i++] = clazz;
+		}
+
+		AgentMessage.sendInfo("is retrans form classes supported:", inst.isRetransformClassesSupported());
+		// Class[] loadedClass = inst.getAllLoadedClasses();
+		// for (Class clazz : loadedClass) {
+		// AgentMessage.sendInfo("loadedClass:", clazz.getName());
+		// }
 
 		AgentTransformer rsa = new AgentTransformer();
 		try {
 			inst.addTransformer(rsa, true);
-			inst.retransformClasses(clazz);
+			inst.retransformClasses(clazzes);
 		} catch (Exception e) {
 			AgentMessage.sendError("Instrumentation fail:", e);
-			finish(rsa, inst, clazz);
+			finish(rsa, inst, clazzes);
 			return;
 		}
 
 		// 启动通信线程
 		startCommunicationThread(args);
 		// 启动关闭线程
-		startAgentEndThread(rsa, inst, clazz);
+		startAgentEndThread(rsa, inst, clazzes);
 
 		// 钩子
-		Runtime.getRuntime().addShutdownHook(new Thread(new AgentEndThread(rsa, inst, clazz, true), "agent-shutdown-reform-thread"));
+		Runtime.getRuntime().addShutdownHook(new Thread(new AgentEndThread(rsa, inst, clazzes, true), "agent-shutdown-reform-thread"));
 		AgentMessage.sendInfo("agentmain end:");
+	}
+
+	private static void printClazzList(Set<Class> clazzList) {
+		for (Class clazz : clazzList) {
+			try {
+				Field[] fieldsTmp = clazz.getFields();// 根据Class对象获得属性
+				Set<Field> fields = new HashSet<Field>();
+				fields.addAll(Arrays.asList(fieldsTmp));
+				fieldsTmp = clazz.getDeclaredFields();
+				fields.addAll(Arrays.asList(fieldsTmp));
+				for (Field f : fields) {
+					AgentMessage.sendInfo("field:", f.getName());// 打印每个属性的类型名字
+				}
+
+				Method[] methodsTmp = clazz.getMethods();
+				Set<Method> methods = new HashSet<Method>();
+				methods.addAll(Arrays.asList(methodsTmp));
+				methodsTmp = clazz.getDeclaredMethods();
+				methods.addAll(Arrays.asList(methodsTmp));
+				for (Method m : methods) {
+					AgentMessage.sendInfo("method:", m.getName());// 打印每个属性的类型名字
+				}
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 	// public static void main(String[] args) {
 	// System.out.println(getClass("socket.Connector").getName());
 	// }
 
-	public static Class<?> getClass(String className) {
+	public static Set<Class> getClasses(String className) {
+		Set<Class> result = new HashSet<Class>();
 		for (int i = 0; i < 3; i++) {
 			try {
 				ThreadGroup group = Thread.currentThread().getThreadGroup();
@@ -104,7 +154,7 @@ public class AgentMain {
 						continue;
 					}
 					if (null != clazz) {
-						return clazz;
+						result.add(clazz);
 					}
 				}
 				Thread.sleep(100);
@@ -112,7 +162,7 @@ public class AgentMain {
 				AgentMessage.sendError("find class exception:", t);
 			}
 		}
-		return null;
+		return result;
 	}
 
 	public static boolean isNumeric(String str) {
@@ -128,7 +178,7 @@ public class AgentMain {
 		return true;
 	}
 
-	private static void startAgentEndThread(AgentTransformer rsa, Instrumentation inst, Class clazz) {
+	private static void startAgentEndThread(AgentTransformer rsa, Instrumentation inst, Class... clazz) {
 		// reform 线程
 		ExecutorService exec = Executors.newSingleThreadExecutor(new ThreadFactory() {
 
@@ -163,18 +213,18 @@ public class AgentMain {
 
 		private Instrumentation inst;
 
-		private Class clazz;
+		private Class[] clazz;
 
 		private boolean force = false;
 
-		public AgentEndThread(AgentTransformer rsa, Instrumentation inst, Class clazz) {
+		public AgentEndThread(AgentTransformer rsa, Instrumentation inst, Class... clazz) {
 			super();
 			this.rsa = rsa;
 			this.inst = inst;
 			this.clazz = clazz;
 		}
 
-		public AgentEndThread(AgentTransformer rsa, Instrumentation inst, Class clazz, boolean force) {
+		public AgentEndThread(AgentTransformer rsa, Instrumentation inst, Class[] clazz, boolean force) {
 			super();
 			this.rsa = rsa;
 			this.inst = inst;
@@ -195,7 +245,7 @@ public class AgentMain {
 		}
 	}
 
-	private static void finish(AgentTransformer rsa, Instrumentation inst, Class clazz) {
+	private static void finish(AgentTransformer rsa, Instrumentation inst, Class... clazz) {
 		try {
 			// 设置完成标志
 			isFinished.set(true);
